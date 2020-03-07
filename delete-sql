@@ -1,0 +1,76 @@
+-- 1. 创建备份表
+create table if not exists db_backup.s2b_group_rel__20200306__wanggang
+as
+select a.*, current_timestamp() as backup_time, convert('', char(30)) as backup_by, convert('', char(255)) as backup_remark
+from s2b_group_rel as a
+where 1=2
+;
+
+-- 2. 创建临时表
+
+create temporary table tmp__s2b_group_rel
+ as
+SELECT id
+FROM s2b_group_rel
+where group_code = 'S2BG0000000000002001151118120398'
+and id in (
+55291,
+55292,
+55293,
+56564,
+56615,
+56616,
+61357
+) and deleted = 1
+;
+
+-- 3. 备份数据
+insert into db_backup.s2b_group_rel__20200306__wanggang
+(
+    `id`,
+    `group_code`,
+    `brand_id`,
+    `product_id`,
+    `sku_id`,
+    `brand_state`,
+    `product_state`,
+    `sku_state`,
+    `created_at`,
+    `created_by`,
+    `deleted`,
+    `s2b_series_id`,
+    `s2b_series_state`,
+    backup_time,
+    backup_by,
+    backup_remark
+)
+select
+    a.id,
+    a.group_code,
+    a.brand_id,
+    a.product_id,
+    a.sku_id,
+    a.brand_state,
+    a.product_state,
+    a.sku_state,
+    a.created_at,
+    a.created_by,
+    a.deleted,
+    a.s2b_series_id,
+    a.s2b_series_state,
+    current_timestamp(),
+     'wanggang',
+     '移除脏数据'
+from `s2b_group_rel` as a
+join tmp__s2b_group_rel as b on b.id = a.id
+;
+
+delete a from s2b_group_rel a
+inner join tmp__s2b_group_rel b on
+a.id = b.id
+where a.group_code = 'S2BG0000000000002001151118120398'
+;
+
+-- 5. 删除临时表
+drop table tmp__s2b_group_rel;
+
